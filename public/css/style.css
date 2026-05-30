@@ -69,7 +69,7 @@ body {
   overflow: hidden;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 769px) and (min-height: 769px) {
   body::before, body::after {
     content: '';
     position: absolute;
@@ -129,7 +129,7 @@ body {
   50% { box-shadow: inset 0 0 35px rgba(0, 212, 255, 0.2), inset 0 0 70px rgba(0, 212, 255, 0.08); }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 769px) and (min-height: 769px) {
   #app {
     width: 95vw;
     height: 90vh;
@@ -1007,7 +1007,7 @@ input[type="range"]::-moz-range-thumb {
   margin-left: 0;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 769px) and (min-height: 769px) {
   #hand-cards:hover .card {
     margin-left: 6px; /* Spread out cards elegantly on hover for desktop */
   }
@@ -1919,7 +1919,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* Tablets and Widescreen Desktop cards scaling */
-@media (min-width: 992px) {
+@media (min-width: 992px) and (min-height: 769px) {
   :root {
     --card-width: 95px;
     --card-height: 135px;
@@ -2715,6 +2715,18 @@ input[type="range"]::-moz-range-thumb {
    to prevent clipping in both landscape and portrait modes.
    ============================================================ */
 @media (max-width: 768px), (max-height: 768px) {
+  #app {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
   :root {
     --card-width: 14.2vmin;
     --card-height: 20vmin;
@@ -2755,6 +2767,7 @@ input[type="range"]::-moz-range-thumb {
 
   /* ---- Turn Indicator ---- */
   .turn-indicator {
+    top: 2.5vmin !important;
     padding: 0.6vmin 2.5vmin !important;
     font-size: 2.2vmin !important;
     min-height: 5.5vmin !important;
@@ -3027,7 +3040,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* Desktop turn glow enhancement */
-@media (min-width: 769px) {
+@media (min-width: 769px) and (min-height: 769px) {
   #app.your-turn-glow {
     border-color: rgba(0, 212, 255, 0.3);
     box-shadow: 

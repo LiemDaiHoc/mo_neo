@@ -1002,13 +1002,6 @@ const UI = {
     const floater = document.createElement('div');
     floater.className = 'floating-card';
     
-    // Center calculations (card sizes approx width: 85px, height: 120px)
-    const startX = fromRect.left + fromRect.width / 2 - 42;
-    const startY = fromRect.top + fromRect.height / 2 - 60;
-    
-    floater.style.left = `${startX}px`;
-    floater.style.top = `${startY}px`;
-    
     // Detect if we should Y-flip (drawing for human player)
     const shouldFlip = (toEl === this.els.handCards);
     
@@ -1030,6 +1023,16 @@ const UI = {
 
     document.body.appendChild(floater);
 
+    // Get actual width and height of the floater dynamically
+    const floaterWidth = floater.offsetWidth || 85;
+    const floaterHeight = floater.offsetHeight || 120;
+
+    const startX = fromRect.left + fromRect.width / 2 - floaterWidth / 2;
+    const startY = fromRect.top + fromRect.height / 2 - floaterHeight / 2;
+    
+    floater.style.left = `${startX}px`;
+    floater.style.top = `${startY}px`;
+
     // Force reflow
     floater.offsetHeight;
 
@@ -1041,8 +1044,8 @@ const UI = {
     }
     
     requestAnimationFrame(() => {
-      const destX = toRect.left + toRect.width / 2 - 42;
-      const destY = toRect.top + toRect.height / 2 - 60;
+      const destX = toRect.left + toRect.width / 2 - floaterWidth / 2;
+      const destY = toRect.top + toRect.height / 2 - floaterHeight / 2;
       
       floater.style.left = `${destX}px`;
       floater.style.top = `${destY}px`;
@@ -1148,8 +1151,8 @@ const UI = {
     setTimeout(() => deck.classList.remove('shuffling-base'), 1200);
 
     const rect = deck.getBoundingClientRect();
-    const startX = rect.left + rect.width / 2 - 42;
-    const startY = rect.top + rect.height / 2 - 60;
+    const startX = rect.left;
+    const startY = rect.top;
 
     const cards = [];
     const count = 3;
