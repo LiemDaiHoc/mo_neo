@@ -314,32 +314,14 @@ const UI = {
 
       const cards = document.createElement('div');
       cards.className = 'opponent-cards';
-      cards.textContent = player.isAlive ? `🃏 ${player.cardCountDisplay}` : 'Bị loại';
+      cards.textContent = player.isAlive ? `🃏 ${player.cardCountDisplay} lá` : '💀 Bị loại';
 
       info.appendChild(name);
       info.appendChild(cards);
       div.appendChild(avatar);
       div.appendChild(info);
 
-      // Show card backs
-      if (player.isAlive && player.cardCountDisplay > 0) {
-        const cardBacks = document.createElement('div');
-        cardBacks.className = 'opponent-card-backs';
-        const displayCount = Math.min(player.cardCountDisplay, 8);
-        for (let i = 0; i < displayCount; i++) {
-          const cardBack = document.createElement('div');
-          cardBack.className = 'mini-card-back';
-          cardBack.style.transform = `translateX(${i * 5}px)`;
-          cardBacks.appendChild(cardBack);
-        }
-        if (player.cardCountDisplay > 8) {
-          const more = document.createElement('span');
-          more.className = 'more-cards';
-          more.textContent = `+${player.cardCountDisplay - 8}`;
-          cardBacks.appendChild(more);
-        }
-        div.appendChild(cardBacks);
-      }
+
 
       area.appendChild(div);
     }
@@ -1360,7 +1342,7 @@ const UI = {
       btn.innerHTML = `
         <span class="target-avatar">${player.avatar}</span>
         <span class="target-name">${player.name}</span>
-        <span class="target-cards">🃏 ${player.cardCountDisplay}</span>
+        <span class="target-cards">🃏 ${player.cardCountDisplay} lá</span>
       `;
       btn.onclick = () => {
         this.closeModal();
@@ -2247,7 +2229,7 @@ const UI = {
 
       const cards = document.createElement('div');
       cards.className = 'opponent-cards';
-      cards.textContent = player.isAlive ? `🃏 ${player.cardCountDisplay}` : 'Bị loại';
+      cards.textContent = player.isAlive ? `🃏 ${player.cardCountDisplay} lá` : '💀 Bị loại';
 
       info.appendChild(name);
       info.appendChild(cards);
