@@ -9,6 +9,7 @@ const UI = {
   isDealingIntro: false,
   previousHandCardIds: [],
   dealTimeout: null,
+  _lastTouchTime: 0,
 
   initElements() {
     this.els = {
@@ -422,7 +423,6 @@ const UI = {
           UI.haptic(40); // Haptic vibration indicator
           UI.showCardPreview(card);
           isDragging = false;
-          onDragEnd(); // Cancel the drag state immediately
         }, 500);
       };
 
@@ -570,40 +570,16 @@ const UI = {
             }
           }
         } else {
-          // Double-tap to play selected card instantly
-          const now = Date.now();
-          const DOUBLE_TAP_DELAY = 300;
-
-          if (UI._lastTapCardId === card.id && (now - UI._lastTapTime) < DOUBLE_TAP_DELAY) {
-            // DOUBLE-TAP
-            UI._lastTapCardId = null;
-            UI._lastTapTime = 0;
-
-            if (Game.currentPlayer && Game.currentPlayer.isHuman && !Game.isProcessing) {
-              const canPlay = Game.canPlaySelected();
-              if (canPlay) {
-                this.haptic(30);
-                Game.playSelectedCards();
-              } else {
-                this.haptic([50, 30, 50]);
-                el.classList.add('shake-invalid');
-                setTimeout(() => el.classList.remove('shake-invalid'), 400);
-              }
-            }
-          } else {
-            // SINGLE-TAP
-            UI._lastTapCardId = card.id;
-            UI._lastTapTime = now;
-
-            this.haptic(10);
-            Sounds.click();
-            Game.selectCard(card.id);
-          }
+          // SINGLE-TAP ONLY (No double tap)
+          this.haptic(10);
+          Sounds.click();
+          Game.selectCard(card.id);
         }
       };
 
       // Bind Mouse Events
       el.addEventListener('mousedown', (e) => {
+        if (Date.now() - (UI._lastTouchTime || 0) < 600) return;
         onDragStart(e.clientX, e.clientY);
         
         const onMouseMove = (moveEvent) => onDragMove(moveEvent.clientX, moveEvent.clientY, moveEvent);
@@ -619,18 +595,22 @@ const UI = {
 
       // Bind Touch Events
       el.addEventListener('touchstart', (e) => {
+        UI._lastTouchTime = Date.now();
         onDragStart(e.touches[0].clientX, e.touches[0].clientY);
       }, { passive: true });
 
       el.addEventListener('touchmove', (e) => {
+        UI._lastTouchTime = Date.now();
         onDragMove(e.touches[0].clientX, e.touches[0].clientY, e);
       }, { passive: false });
 
       el.addEventListener('touchend', () => {
+        UI._lastTouchTime = Date.now();
         onDragEnd();
       });
 
       el.addEventListener('touchcancel', () => {
+        UI._lastTouchTime = Date.now();
         onDragEnd();
       });
 

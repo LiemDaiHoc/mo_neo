@@ -217,9 +217,12 @@ const Network = {
     });
 
     s.on('nope_played', (data) => {
-      // data: { playerId, playerName }
+      // data: { playerIndex, playerName, nopeCount }
       Sounds.nope();
       Game.addLog(`🚫 ${data.playerName} đánh Phản Đối!`);
+      if (typeof UI !== 'undefined' && typeof UI.triggerNopeGlitchEffect === 'function') {
+        UI.triggerNopeGlitchEffect(data.playerName);
+      }
     });
 
     s.on('nope_resolved', () => {

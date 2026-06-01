@@ -745,7 +745,13 @@ class ServerGame {
       playedByName: playedBy.name,
       playedByIndex,
       targetName: target?.name || null,
-      duration: 5000
+      duration: 5000,
+      timeoutMs: 5000,
+      card: {
+        type: cardType,
+        name: CardInfo[cardType]?.name || cardType,
+        emoji: CardInfo[cardType]?.emoji || '🃏'
+      }
     });
 
     this.broadcastState();
@@ -819,7 +825,13 @@ class ServerGame {
         playedByIndex: this.pendingAction.playedByIndex,
         targetName: this.pendingAction.targetName,
         nopeCount: this.pendingAction.nopeCount,
-        duration: 4000
+        duration: 4000,
+        timeoutMs: 4000,
+        card: {
+          type: this.pendingAction.cardType,
+          name: CardInfo[this.pendingAction.cardType]?.name || this.pendingAction.cardType,
+          emoji: CardInfo[this.pendingAction.cardType]?.emoji || '🃏'
+        }
       });
 
       this.broadcastState();
