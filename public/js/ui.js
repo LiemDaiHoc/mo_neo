@@ -2467,6 +2467,10 @@ const UI = {
       btn.textContent = isFS ? '✕' : '⛶';
       btn.title = isFS ? 'Thoát toàn màn hình' : 'Toàn màn hình';
 
+      if (this.els.app) {
+        this.els.app.classList.toggle('fullscreen-active', isFS);
+      }
+
       // Auto orientation lock to landscape when entering fullscreen
       if (isFS) {
         if (screen.orientation && typeof screen.orientation.lock === 'function') {
