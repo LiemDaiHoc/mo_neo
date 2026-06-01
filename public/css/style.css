@@ -3583,7 +3583,11 @@ input[type="range"]::-moz-range-thumb {
 /* Drop Zone Overlay */
 .drop-zone-overlay {
   position: absolute;
-  inset: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  aspect-ratio: 9 / 16 !important;
   border: 2.5px dashed rgba(255, 255, 255, 0.25);
   border-radius: var(--card-radius) !important;
   background: rgba(10, 10, 26, 0.93);

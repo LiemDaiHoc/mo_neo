@@ -507,8 +507,8 @@ const UI = {
             const staticDiffX = dragOffsets[index] || 0;
             
             // High stack offset on all sides organic look under the finger
-            const offsetX = currentX - staticDiffX + (index * 16);
-            const offsetY = currentY - (index * 8);
+            const offsetX = currentX - staticDiffX + (index * 20);
+            const offsetY = currentY - (index * 6);
             const rot = currentX * 0.05 + (index * 4 - (selectedCards.length - 1) * 2);
             
             cardEl.style.setProperty('transform', `translate(${offsetX}px, ${offsetY}px) scale(1.08) rotate(${rot}deg)`, 'important');
@@ -792,8 +792,8 @@ const UI = {
         
         // Stack neatly overlapping: top card has 0 offset, cards below shift slightly
         const depth = discardSize - 1 - i; // 0 for top card, 1 for card below, etc.
-        const tx = depth * 1.5; // shift right slightly per card depth
-        const ty = -depth * 1.5; // shift up slightly per card depth
+        const tx = depth * 3.5; // shift right slightly per card depth (stronger offset)
+        const ty = -depth * 1.0; // shift up slightly per card depth (lighter offset)
         const rot = ((i * 7) % 9) - 4; // very small rotation (-4deg to 4deg)
         
         cardEl.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
@@ -1045,8 +1045,8 @@ const UI = {
       let comboOffsetX = 0;
       let comboOffsetY = 0;
       if (totalCards > 1) {
-        comboOffsetX = (cardIndex % 2 === 0 ? 1 : -1) * (2 + (cardIndex * 0.5));
-        comboOffsetY = (Math.floor(cardIndex / 2) % 2 === 0 ? -1 : 1) * (2 + (cardIndex * 0.5));
+        comboOffsetX = (cardIndex % 2 === 0 ? 1 : -1) * (4 + (cardIndex * 1.0));
+        comboOffsetY = (Math.floor(cardIndex / 2) % 2 === 0 ? -1 : 1) * (1.5 + (cardIndex * 0.3));
       }
 
       const destX = toRect.left + toRect.width / 2 - floaterWidth / 2 + comboOffsetX;
