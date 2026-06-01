@@ -69,6 +69,40 @@ const UI = {
       fullscreenBtn: document.getElementById('fullscreen-btn'),
       turnFlash: document.getElementById('turn-flash'),
     };
+
+    // Setup scaling
+    if (!window._scaleEventRegistered) {
+      window._scaleEventRegistered = true;
+      window.addEventListener('resize', () => this.adjustAppScale());
+    }
+    setTimeout(() => this.adjustAppScale(), 50);
+  },
+
+  adjustAppScale() {
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    // Reset styles first
+    app.style.transform = '';
+    app.style.transformOrigin = '';
+    document.body.style.overflow = 'hidden';
+
+    const isPortrait = window.innerHeight > window.innerWidth;
+    const minW = isPortrait ? 360 : 1024;
+    const minH = isPortrait ? 640 : 600;
+
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+
+    let scale = 1;
+    if (winW < minW || winH < minH) {
+      scale = Math.min(winW / minW, winH / minH);
+    }
+
+    if (scale < 1) {
+      app.style.transform = `scale(${scale})`;
+      app.style.transformOrigin = 'center center';
+    }
   },
 
   // Helper to find the local player
@@ -456,6 +490,33 @@ const UI = {
             UI.updateCardSelectionStates();
           }
 
+          // HOẠT ẢNH HÚT LÁ CÒN LẠI KHI KÉO CẶP MÈO
+          if (card.type && card.type.startsWith('cat_')) {
+            // Tìm xem trên tay còn lá nào cùng loại nhưng chưa được chọn không
+            const otherCard = Game.currentPlayer?.hand?.find(c => c.type === card.type && String(c.id) !== String(card.id));
+            if (otherCard && !Game.selectedCards.map(String).includes(String(otherCard.id))) {
+              // Thêm lá thứ hai vào danh sách chọn
+              Game.selectedCards.push(otherCard.id);
+              UI.updateCardSelectionStates();
+
+              // Kích hoạt transition hút mượt mà cho lá thứ hai
+              const otherId = otherCard.id;
+              setTimeout(() => {
+                const secondCardEl = container.querySelector(`.card[data-card-id="${otherId}"]`);
+                if (secondCardEl) {
+                  // Đặt transition đàn hồi mượt mà để kéo lá bài bay theo nhập vào ngón tay
+                  secondCardEl.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 'important');
+                  // Sau khi hút xong (350ms), gỡ bỏ transition để di chuyển nhạy bén theo tay
+                  setTimeout(() => {
+                    if (isDragging) {
+                      secondCardEl.style.transition = 'none';
+                    }
+                  }, 350);
+                }
+              }, 0);
+            }
+          }
+
           // Cache original static layout offsets of selected cards relative to the first one
           const selectedCards = Array.from(container.querySelectorAll('.card.selected'));
           const refRect = selectedCards[0]?.getBoundingClientRect();
@@ -467,7 +528,7 @@ const UI = {
           // Set transition and z-index for all selected cards
           selectedCards.forEach(cardEl => {
             cardEl.style.transition = 'none';
-            cardEl.style.setProperty('z-index', '1000', 'important');
+            cardEl.style.setProperty('z-index', '100000', 'important');
           });
           // Elevate parent stacking context so dragged cards float above all layers
           document.querySelector('.hand-section')?.classList.add('dragging-active');
