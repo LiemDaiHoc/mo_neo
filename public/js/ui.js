@@ -406,6 +406,7 @@ const UI = {
       let currentY = 0;
       let dragThreshold = 8; // min drag to lock drag state
       let playThreshold = -80; // drag 80px upwards to play
+      let dragOffsets = [];
 
       // Drag action handlers
       const onDragStart = (clientX, clientY) => {
@@ -455,8 +456,15 @@ const UI = {
             UI.updateCardSelectionStates();
           }
 
+          // Cache original static layout offsets of selected cards relative to the first one
+          const selectedCards = Array.from(container.querySelectorAll('.card.selected'));
+          const refRect = selectedCards[0]?.getBoundingClientRect();
+          dragOffsets = selectedCards.map((cardEl, idx) => {
+            if (idx === 0 || !refRect) return 0;
+            return cardEl.getBoundingClientRect().left - refRect.left;
+          });
+
           // Set transition and z-index for all selected cards
-          const selectedCards = container.querySelectorAll('.card.selected');
           selectedCards.forEach(cardEl => {
             cardEl.style.transition = 'none';
             cardEl.style.setProperty('z-index', '1000', 'important');
@@ -465,7 +473,7 @@ const UI = {
           document.querySelector('.hand-section')?.classList.add('dragging-active');
 
           // DYNAMIC OVERLAY DROP ZONE CREATION & ACTIVATION
-          let tableArea = document.querySelector('.table-area');
+          let tableArea = this.els.discardArea; // Target centered card-shaped discard area!
           let dropOverlay = document.getElementById('drop-zone-overlay');
           if (tableArea && !dropOverlay) {
             dropOverlay = document.createElement('div');
@@ -473,7 +481,7 @@ const UI = {
             dropOverlay.className = 'drop-zone-overlay';
             dropOverlay.innerHTML = `
               <div class="drop-zone-icon">📥</div>
-              <div class="drop-zone-text">Thả vào đây để đánh</div>
+              <div class="drop-zone-text">Thả</div>
             `;
             tableArea.appendChild(dropOverlay);
           }
@@ -481,7 +489,7 @@ const UI = {
             dropOverlay.classList.add('active');
             const canPlay = Game.canPlaySelected();
             dropOverlay.className = `drop-zone-overlay active ${canPlay ? 'valid' : 'invalid'}`;
-            dropOverlay.querySelector('.drop-zone-text').textContent = canPlay ? 'THẢ ĐỂ ĐÁNH BÀI!' : 'KHÔNG THỂ ĐÁNH LÁ NÀY!';
+            dropOverlay.querySelector('.drop-zone-text').textContent = canPlay ? 'THẢ' : '⚠️';
             dropOverlay.querySelector('.drop-zone-icon').textContent = canPlay ? '📥' : '⚠️';
           }
         }
@@ -493,10 +501,17 @@ const UI = {
           // Damp down pull offsets
           if (currentY > 0) currentY = currentY * 0.2; 
           
-          // Animate ALL selected cards following cursor/finger together
-          const selectedCards = container.querySelectorAll('.card.selected');
-          selectedCards.forEach(cardEl => {
-            cardEl.style.setProperty('transform', `translate(${currentX}px, ${currentY}px) scale(1.08) rotate(${currentX * 0.05}deg)`, 'important');
+          // Animate ALL selected cards following cursor/finger together and stack offset organically
+          const selectedCards = Array.from(container.querySelectorAll('.card.selected'));
+          selectedCards.forEach((cardEl, index) => {
+            const staticDiffX = dragOffsets[index] || 0;
+            
+            // High stack offset on all sides organic look under the finger
+            const offsetX = currentX - staticDiffX + (index * 16);
+            const offsetY = currentY - (index * 8);
+            const rot = currentX * 0.05 + (index * 4 - (selectedCards.length - 1) * 2);
+            
+            cardEl.style.setProperty('transform', `translate(${offsetX}px, ${offsetY}px) scale(1.08) rotate(${rot}deg)`, 'important');
           });
 
           // Proactive dragging validation: check if combo is playable

@@ -3583,9 +3583,9 @@ input[type="range"]::-moz-range-thumb {
 /* Drop Zone Overlay */
 .drop-zone-overlay {
   position: absolute;
-  inset: 6px;
+  inset: 0 !important;
   border: 2.5px dashed rgba(255, 255, 255, 0.25);
-  border-radius: 20px;
+  border-radius: var(--card-radius) !important;
   background: rgba(10, 10, 26, 0.93);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -3597,7 +3597,7 @@ input[type="range"]::-moz-range-thumb {
   pointer-events: none;
   transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
   z-index: 15;
-  gap: 1vmin;
+  gap: 4px !important;
 }
 
 .drop-zone-overlay.active {
@@ -3627,17 +3627,19 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .drop-zone-icon {
-  font-size: 6vmin;
+  font-size: 26px !important;
+  font-size: 5vmin !important;
   animation: bounceSlow 1.5s ease-in-out infinite;
 }
 
 .drop-zone-text {
-  font-size: 2.2vmin;
+  font-size: 11px !important;
+  font-size: 1.8vmin !important;
   font-weight: 900;
-  letter-spacing: 0.2vmin;
+  letter-spacing: 0.1vmin;
   text-transform: uppercase;
   text-align: center;
-  padding: 0 2vmin;
+  padding: 0 4px;
 }
 
 @keyframes bounceSlow {
