@@ -87,6 +87,13 @@ const UI = {
     app.style.transformOrigin = '';
     document.body.style.overflow = 'hidden';
 
+    // Reset game-screen styles
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen) {
+      gameScreen.style.transform = '';
+      gameScreen.style.transformOrigin = '';
+    }
+
     const isPortrait = window.innerHeight > window.innerWidth;
     const minW = isPortrait ? 360 : 1024;
     const minH = isPortrait ? 640 : 600;
@@ -100,8 +107,15 @@ const UI = {
     }
 
     if (scale < 1) {
-      app.style.transform = `scale(${scale})`;
-      app.style.transformOrigin = 'center center';
+      if (isPortrait) {
+        app.style.transform = `scale(${scale})`;
+        app.style.transformOrigin = 'center center';
+      } else {
+        if (gameScreen) {
+          gameScreen.style.transform = `translate(-50%, -50%) scale(${scale})`;
+          gameScreen.style.transformOrigin = 'center center';
+        }
+      }
     }
   },
 
