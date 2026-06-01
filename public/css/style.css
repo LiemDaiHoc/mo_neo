@@ -121,9 +121,14 @@ body {
 /* Widescreen 16:9 constraint with center alignment and expanding wings */
 @media (min-aspect-ratio: 16/9) {
   #app {
+    width: 100% !important;
+    height: 100% !important;
     max-width: calc(100vh * 16 / 9) !important;
+    max-height: 100vh !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    border-radius: 0 !important;
+    border: none !important;
     box-shadow: 0 0 80px rgba(0, 0, 0, 0.75) !important;
   }
 }
@@ -3055,12 +3060,12 @@ input[type="range"]::-moz-range-thumb {
   
   /* Stacking the bottom right opponent and player box into bottom 4-corners above hand */
   .opponent.pos-3, .opponent.pos-bottom-right {
-    bottom: 15vmin !important;
+    bottom: 25vmin !important;
     right: 2vmin !important;
     top: auto !important;
   }
   #player-info {
-    bottom: 15vmin !important;
+    bottom: 25vmin !important;
     left: 2vmin !important;
     top: auto !important;
   }
@@ -3811,6 +3816,30 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 1.5vmin 4vmin rgba(0, 0, 0, 0.6), 0 0 2.5vmin rgba(0, 255, 136, 0.5), inset 0 0 1.5vmin rgba(0, 255, 136, 0.4) !important;
   border: 0.4vmin solid var(--neon-green) !important;
   z-index: 150 !important;
+}
+
+/* ============================================================
+   ULTIMATE DRAGGING STACK OVERFLOW & Z-INDEX BYPASS OVERRIDES
+   Guarantees dragged cards bypass overflow-x: auto clipping 
+   context and float absolutely on top of all layers.
+   ============================================================ */
+.hand-section.dragging-active,
+#app.fullscreen-active .hand-section.dragging-active {
+  z-index: 999999999 !important;
+}
+
+.hand-section.dragging-active #hand-cards,
+.hand-section.dragging-active #hand-area,
+#app.fullscreen-active .hand-section.dragging-active #hand-cards,
+#app.fullscreen-active .hand-section.dragging-active #hand-area {
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+
+.hand-section.dragging-active .card.selected,
+#app.fullscreen-active .hand-section.dragging-active .card.selected {
+  z-index: 100000000 !important;
 }
 
 
