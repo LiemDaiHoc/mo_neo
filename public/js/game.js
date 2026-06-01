@@ -393,7 +393,7 @@ const Game = {
     const cardName = cards[0].name;
     this.addLog(`🐱 ${player.name} đánh cặp ${cardName} → ăn cắp bài của ${target.name}!`);
     Sounds.catCombo();
-    UI.animateCardPlay(cards[0], player);
+    UI.animateCardPlay(cards, player);
     await delay(400);
 
     // Check for Nope (use first card as reference)
@@ -439,7 +439,7 @@ const Game = {
 
     this.addLog(`✨ ${player.name} đánh Combo 5 lá khác biệt!`);
     Sounds.cardPlay();
-    UI.animateCardPlay(cards[0], player);
+    UI.animateCardPlay(cards, player);
     await delay(400);
 
     // Check for Nope

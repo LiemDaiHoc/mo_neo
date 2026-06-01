@@ -182,8 +182,20 @@ const Network = {
     s.on('card_played', (data) => {
       // data: { playerIndex, playerName, cardType, cardName, targetName }
       if (data.cardType) {
-        const info = typeof CARD_INFO !== 'undefined' ? CARD_INFO[data.cardType] : null;
-        const cardObj = info || { emoji: '🃏', name: data.cardName || data.cardType, gradient: ['#444','#666'] };
+        let cardObj;
+        if (data.cardType === 'cat_pair') {
+          // Construct 2 dummy card objects for pair animation
+          const cardInfo = { emoji: '🐱', name: data.cardName || 'Bài Mèo', gradient: ['#ff9f43', '#ff5252'] };
+          cardObj = [{ id: 'dummy_cat1', ...cardInfo }, { id: 'dummy_cat2', ...cardInfo }];
+        } else if (data.cardType === 'five_card_combo') {
+          // Construct 5 dummy card objects for 5-card combo animation
+          const cardInfo = { emoji: '✨', name: data.cardName || 'Combo 5 Lá', gradient: ['#ec4899', '#8b5cf6'] };
+          cardObj = Array.from({ length: 5 }, (_, i) => ({ id: `dummy_combo_${i}`, ...cardInfo }));
+        } else {
+          const info = typeof CARD_INFO !== 'undefined' ? CARD_INFO[data.cardType] : null;
+          cardObj = info ? { ...info, id: 'dummy_' + data.cardType } : { id: 'dummy_' + data.cardType, emoji: '🃏', name: data.cardName || data.cardType, gradient: ['#444','#666'] };
+        }
+        
         Sounds.cardPlay();
         UI.animateCardPlay(cardObj, { index: data.playerIndex, name: data.playerName });
       }

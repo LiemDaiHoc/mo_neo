@@ -98,7 +98,26 @@ const UI = {
     if (this.els.waitingScreen) this.els.waitingScreen.classList.remove('active');
   },
 
+  cleanupTableMat() {
+    // 1. Close any active modals
+    this.closeModal();
+    
+    // 2. Hide overlays
+    if (this.els.modalOverlay) this.els.modalOverlay.classList.remove('active');
+    if (this.els.explosionOverlay) this.els.explosionOverlay.classList.remove('active');
+    
+    // 3. Remove temporary dynamic overlays from DOM
+    document.querySelectorAll('.nope-glitch-overlay, .defuse-saved-overlay, .turn-flash-overlay, .card-preview-overlay, .floating-card').forEach(el => el.remove());
+    
+    // 4. Reset drop zone overlay state
+    const dropOverlay = document.getElementById('drop-zone-overlay');
+    if (dropOverlay) {
+      dropOverlay.classList.remove('active', 'valid', 'invalid');
+    }
+  },
+
   showGame() {
+    this.cleanupTableMat();
     this._hideAllScreens();
     this.els.gameScreen.classList.add('active');
     this.setupGameEvents();
@@ -749,19 +768,20 @@ const UI = {
 
     const discardSize = Game.discardPile.length;
     if (discardSize > 0) {
-      // Render up to 4 cards stacked together with realistic translations and rotations
-      const startIdx = Math.max(0, discardSize - 4);
+      // Render up to 12 cards stacked together with realistic progressive translations and rotations
+      const startIdx = Math.max(0, discardSize - 12);
       for (let i = startIdx; i < discardSize; i++) {
         const card = Game.discardPile[i];
         const cardEl = this.createCardElement(card, true);
         cardEl.classList.add('discard-card');
         
-        // Deterministic offset and rotation based on index so it is stable when rendered
-        const rot = ((i * 37) % 25) - 12; // Between -12deg and 12deg
-        const tx = ((i * 13) % 10) - 5;    // Between -5px and 5px
-        const ty = ((i * 23) % 10) - 5;    // Between -5px and 5px
+        // Stack neatly overlapping: top card has 0 offset, cards below shift slightly
+        const depth = discardSize - 1 - i; // 0 for top card, 1 for card below, etc.
+        const tx = depth * 1.5; // shift right slightly per card depth
+        const ty = -depth * 1.5; // shift up slightly per card depth
+        const rot = ((i * 7) % 9) - 4; // very small rotation (-4deg to 4deg)
         
-        cardEl.style.transform = `rotate(${rot}deg) translate(${tx}px, ${ty}px)`;
+        cardEl.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
         cardEl.style.zIndex = i - startIdx + 1; // Correct layering
         
         pile.appendChild(cardEl);
@@ -951,7 +971,7 @@ const UI = {
 
   // ===== Animations =====
 
-  _flyCard(faceUp, card, fromEl, toEl, callback) {
+  _flyCard(faceUp, card, fromEl, toEl, callback, cardIndex = 0, totalCards = 1) {
     if (!fromEl || !toEl) {
       if (callback) callback();
       return;
@@ -1006,8 +1026,12 @@ const UI = {
     }
     
     requestAnimationFrame(() => {
-      const destX = toRect.left + toRect.width / 2 - floaterWidth / 2;
-      const destY = toRect.top + toRect.height / 2 - floaterHeight / 2;
+      // Offset destination slightly if playing multiple cards/combos to fan them out beautifully
+      const comboOffsetX = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * 12 : 0;
+      const comboOffsetY = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * -4 : 0;
+
+      const destX = toRect.left + toRect.width / 2 - floaterWidth / 2 + comboOffsetX;
+      const destY = toRect.top + toRect.height / 2 - floaterHeight / 2 + comboOffsetY;
       
       floater.style.left = `${destX}px`;
       floater.style.top = `${destY}px`;
@@ -1016,7 +1040,9 @@ const UI = {
       if (inner) {
         // If drawing: Y-flip to face-up (180deg). If playing: Y-spin from 180deg to 540deg.
         const rotY = shouldFlip ? 180 : (faceUp ? 540 : 0);
-        inner.style.transform = `rotateY(${rotY}deg) scale(1) rotate(${Math.random() * 20 - 10}deg)`;
+        // Slightly rotate progressively based on index for a premium fanned stacked look
+        const rotZ = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * 4 : Math.random() * 20 - 10;
+        inner.style.transform = `rotateY(${rotY}deg) scale(1) rotate(${rotZ}deg)`;
       }
     });
 
@@ -1026,14 +1052,15 @@ const UI = {
       floater.style.opacity = '0';
       if (inner) {
         inner.style.transition = 'transform 0.25s ease';
-        inner.style.transform = `scale(0.85) rotate(${Math.random() * 30 - 15}deg)`;
+        const rotZ = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * 6 : Math.random() * 30 - 15;
+        inner.style.transform = `scale(0.85) rotate(${rotZ}deg)`;
       }
       
       setTimeout(() => {
         floater.remove();
         
-        // Discard Pile Impact effect when card lands
-        if (toEl === this.els.discardArea) {
+        // Discard Pile Impact effect when card lands (only trigger on the last card of the combo to prevent multiple shakes)
+        if (toEl === this.els.discardArea && cardIndex === totalCards - 1) {
           this.playDiscardImpact(card);
         }
         
@@ -1042,31 +1069,41 @@ const UI = {
     }, 650);
   },
 
-  animateCardPlay(card, player) {
-    let fromEl;
+  animateCardPlay(cardOrCards, player) {
+    const cards = Array.isArray(cardOrCards) ? cardOrCards : [cardOrCards];
     const myPlayer = this.getMyPlayer();
-    if (player.index === myPlayer.index) {
-      const cardEl = document.querySelector(`.card[data-card-id="${card.id}"]`);
-      fromEl = cardEl || this.els.playerInfo;
-    } else {
-      fromEl = document.querySelector(`.opponent[data-player-index="${player.index}"]`);
-    }
-    
-    const toEl = this.els.discardArea;
-    this._flyCard(true, card, fromEl, toEl);
+    const isMe = player.index === myPlayer.index;
 
-    // Trigger Nope screen effect!
-    if (card.type === CardType.NOPE) {
+    cards.forEach((card, index) => {
       setTimeout(() => {
-        this.triggerNopeGlitchEffect(player.name);
-      }, 350); // Sync with flight mid-way
-    }
+        let fromEl;
+        if (isMe) {
+          const cardEl = document.querySelector(`.card[data-card-id="${card.id}"]`);
+          fromEl = cardEl || this.els.playerInfo;
+        } else {
+          fromEl = document.querySelector(`.opponent[data-player-index="${player.index}"]`);
+        }
+        
+        const toEl = this.els.discardArea;
+        this._flyCard(true, card, fromEl, toEl, null, index, cards.length);
+      }, index * 80); // Satisfying staggered ripple launch
+    });
 
-    // Trigger Defuse screen effect!
-    if (card.type === CardType.DEFUSE) {
-      setTimeout(() => {
-        this.triggerDefuseSavedEffect(player.name);
-      }, 350);
+    const firstCard = cards[0];
+    if (firstCard) {
+      // Trigger Nope screen effect!
+      if (firstCard.type === CardType.NOPE) {
+        setTimeout(() => {
+          this.triggerNopeGlitchEffect(player.name);
+        }, 350); // Sync with flight mid-way
+      }
+
+      // Trigger Defuse screen effect!
+      if (firstCard.type === CardType.DEFUSE) {
+        setTimeout(() => {
+          this.triggerDefuseSavedEffect(player.name);
+        }, 350);
+      }
     }
   },
 
