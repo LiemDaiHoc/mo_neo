@@ -1337,7 +1337,7 @@ input[type="range"]::-moz-range-thumb {
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  z-index: 500;
+  z-index: 800;
   display: none;
   align-items: center;
   justify-content: center;
