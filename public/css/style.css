@@ -718,8 +718,8 @@ input[type="range"]::-moz-range-thumb {
 /* Absolute position for the deck pile on the left side of the table */
 .table-area .table-pile-wrapper:first-child {
   position: absolute;
-  left: 32px;
-  top: 12px;
+  left: -120px;
+  top: 16px;
   z-index: 10;
 }
 
@@ -2811,8 +2811,8 @@ input[type="range"]::-moz-range-thumb {
   }
   .table-area .table-pile-wrapper:first-child {
     position: absolute !important;
-    left: 4.5vmin !important;
-    top: 1vmin !important;
+    left: -17vmin !important;
+    top: 1.2vmin !important;
     z-index: 10 !important;
   }
   .table-pile-wrapper {
@@ -3727,8 +3727,8 @@ input[type="range"]::-moz-range-thumb {
 }
 #app.fullscreen-active .table-area .table-pile-wrapper:first-child {
   position: absolute !important;
-  left: 4.5vmin !important;
-  top: 1vmin !important;
+  left: -17vmin !important;
+  top: 1.2vmin !important;
   z-index: 10 !important;
 }
 #app.fullscreen-active .table-pile-wrapper {

@@ -1026,9 +1026,13 @@ const UI = {
     }
     
     requestAnimationFrame(() => {
-      // Stack combo cards directly on top of each other slightly offset instead of side-by-side
-      const comboOffsetX = totalCards > 1 ? cardIndex * 2.5 : 0;
-      const comboOffsetY = totalCards > 1 ? cardIndex * -2.5 : 0;
+      // Alternating organic offsets on all sides so they stack naturally instead of leaning in one direction
+      let comboOffsetX = 0;
+      let comboOffsetY = 0;
+      if (totalCards > 1) {
+        comboOffsetX = (cardIndex % 2 === 0 ? 1 : -1) * (2 + (cardIndex * 0.5));
+        comboOffsetY = (Math.floor(cardIndex / 2) % 2 === 0 ? -1 : 1) * (2 + (cardIndex * 0.5));
+      }
 
       const destX = toRect.left + toRect.width / 2 - floaterWidth / 2 + comboOffsetX;
       const destY = toRect.top + toRect.height / 2 - floaterHeight / 2 + comboOffsetY;
