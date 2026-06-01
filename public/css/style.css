@@ -3846,9 +3846,11 @@ input[type="range"]::-moz-range-thumb {
 /* ============================================================
    ULTIMATE WIDESCREEN 16:9 ASPECT-RATIO LOCK OVERRIDES
    Guarantees that on all widescreen ratios (landscape), the game
-   always locks strictly to a 16:9 vertical frame at the center
-   and never gets stretched horizontally by fullscreen/mobile queries.
+   always locks strictly to a 16:9 vertical frame at the center,
+   scaling to match the shorter dimension perfectly without any shrink.
    ============================================================ */
+
+/* 1. Màn hình ngang dài (Chiều rộng dư dả, Chiều cao là cạnh bé hơn, e.g. 21:9, 32:9) */
 @media (min-aspect-ratio: 16/9) {
   #app,
   #app.fullscreen-active {
@@ -3859,6 +3861,27 @@ input[type="range"]::-moz-range-thumb {
     aspect-ratio: 16 / 9 !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: 0 0 80px rgba(0, 0, 0, 0.75) !important;
+  }
+}
+
+/* 2. Màn hình ngang ngắn (Chiều cao dư dả, Chiều rộng là cạnh bé hơn, e.g. 16:10, 4:3) */
+@media (max-aspect-ratio: 16/9) and (min-aspect-ratio: 1/1) {
+  #app,
+  #app.fullscreen-active {
+    width: 100vw !important;
+    height: calc(100vw * 9 / 16) !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    aspect-ratio: 16 / 9 !important;
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     border-radius: 0 !important;
     border: none !important;
     box-shadow: 0 0 80px rgba(0, 0, 0, 0.75) !important;
