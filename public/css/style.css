@@ -121,10 +121,11 @@ body {
 /* Widescreen 16:9 constraint with center alignment and expanding wings */
 @media (min-aspect-ratio: 16/9) {
   #app {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: calc(100vh * 16 / 9) !important;
+    width: calc(100vh * 16 / 9) !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
     max-height: 100vh !important;
+    aspect-ratio: 16 / 9 !important;
     margin-left: auto !important;
     margin-right: auto !important;
     border-radius: 0 !important;
@@ -3060,12 +3061,12 @@ input[type="range"]::-moz-range-thumb {
   
   /* Stacking the bottom right opponent and player box into bottom 4-corners above hand */
   .opponent.pos-3, .opponent.pos-bottom-right {
-    bottom: 25vmin !important;
+    bottom: 37vmin !important;
     right: 2vmin !important;
     top: auto !important;
   }
   #player-info {
-    bottom: 25vmin !important;
+    bottom: 37vmin !important;
     left: 2vmin !important;
     top: auto !important;
   }
