@@ -3843,5 +3843,27 @@ input[type="range"]::-moz-range-thumb {
   z-index: 100000000 !important;
 }
 
+/* ============================================================
+   ULTIMATE WIDESCREEN 16:9 ASPECT-RATIO LOCK OVERRIDES
+   Guarantees that on all widescreen ratios (landscape), the game
+   always locks strictly to a 16:9 vertical frame at the center
+   and never gets stretched horizontally by fullscreen/mobile queries.
+   ============================================================ */
+@media (min-aspect-ratio: 16/9) {
+  #app,
+  #app.fullscreen-active {
+    width: calc(100vh * 16 / 9) !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    aspect-ratio: 16 / 9 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: 0 0 80px rgba(0, 0, 0, 0.75) !important;
+  }
+}
+
 
 
