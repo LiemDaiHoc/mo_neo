@@ -1026,9 +1026,9 @@ const UI = {
     }
     
     requestAnimationFrame(() => {
-      // Offset destination slightly if playing multiple cards/combos to fan them out beautifully
-      const comboOffsetX = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * 12 : 0;
-      const comboOffsetY = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * -4 : 0;
+      // Stack combo cards directly on top of each other slightly offset instead of side-by-side
+      const comboOffsetX = totalCards > 1 ? cardIndex * 2.5 : 0;
+      const comboOffsetY = totalCards > 1 ? cardIndex * -2.5 : 0;
 
       const destX = toRect.left + toRect.width / 2 - floaterWidth / 2 + comboOffsetX;
       const destY = toRect.top + toRect.height / 2 - floaterHeight / 2 + comboOffsetY;
@@ -1040,8 +1040,8 @@ const UI = {
       if (inner) {
         // If drawing: Y-flip to face-up (180deg). If playing: Y-spin from 180deg to 540deg.
         const rotY = shouldFlip ? 180 : (faceUp ? 540 : 0);
-        // Slightly rotate progressively based on index for a premium fanned stacked look
-        const rotZ = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * 4 : Math.random() * 20 - 10;
+        // Progressive tight rotation tilt for a clean stacked look
+        const rotZ = totalCards > 1 ? ((cardIndex * 3) % 7) - 3 : Math.random() * 20 - 10;
         inner.style.transform = `rotateY(${rotY}deg) scale(1) rotate(${rotZ}deg)`;
       }
     });
@@ -1052,7 +1052,7 @@ const UI = {
       floater.style.opacity = '0';
       if (inner) {
         inner.style.transition = 'transform 0.25s ease';
-        const rotZ = totalCards > 1 ? (cardIndex - (totalCards - 1) / 2) * 6 : Math.random() * 30 - 15;
+        const rotZ = totalCards > 1 ? ((cardIndex * 3) % 7) - 3 : Math.random() * 30 - 15;
         inner.style.transform = `scale(0.85) rotate(${rotZ}deg)`;
       }
       

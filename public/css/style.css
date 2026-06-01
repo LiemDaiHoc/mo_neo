@@ -719,6 +719,8 @@ input[type="range"]::-moz-range-thumb {
 .table-area .table-pile-wrapper:first-child {
   position: absolute;
   left: 32px;
+  top: 12px;
+  z-index: 10;
 }
 
 /* Hide table divider for a clean centered discard layout */
@@ -2810,6 +2812,8 @@ input[type="range"]::-moz-range-thumb {
   .table-area .table-pile-wrapper:first-child {
     position: absolute !important;
     left: 4.5vmin !important;
+    top: 1vmin !important;
+    z-index: 10 !important;
   }
   .table-pile-wrapper {
     padding-bottom: 3vmin !important;
@@ -3724,6 +3728,8 @@ input[type="range"]::-moz-range-thumb {
 #app.fullscreen-active .table-area .table-pile-wrapper:first-child {
   position: absolute !important;
   left: 4.5vmin !important;
+  top: 1vmin !important;
+  z-index: 10 !important;
 }
 #app.fullscreen-active .table-pile-wrapper {
   padding-bottom: 3vmin !important;
