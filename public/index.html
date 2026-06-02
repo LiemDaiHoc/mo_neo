@@ -82,11 +82,16 @@
           <!-- Avatar Picker -->
           <div class="lobby-field">
             <label>😺 Chọn Avatar</label>
-            <div class="avatar-picker" id="avatar-picker">
-              <button class="avatar-option selected" data-avatar="😺">😺</button>
-              <button class="avatar-option" data-avatar="😸">😸</button>
-              <button class="avatar-option" data-avatar="😹">😹</button>
-              <button class="avatar-option" data-avatar="😻">😻</button>
+            <div class="avatar-picker-row" style="display:flex;gap:10px;align-items:center;">
+              <div class="avatar-picker" id="avatar-picker" style="flex:1;margin-bottom:0;">
+                <button class="avatar-option selected" data-avatar="😺">😺</button>
+                <button class="avatar-option" data-avatar="😸">😸</button>
+                <button class="avatar-option" data-avatar="😹">😹</button>
+                <button class="avatar-option" data-avatar="😻">😻</button>
+              </div>
+              <div class="custom-avatar-box" style="flex:0 0 100px;">
+                <input type="text" id="custom-avatar-input" class="neon-input" placeholder="Tự nhập..." maxlength="2" style="text-align:center;padding:8px 5px;font-size:16px;">
+              </div>
             </div>
           </div>
 
@@ -98,6 +103,10 @@
 
           <!-- Create Room Panel -->
           <div id="create-panel" class="lobby-panel">
+            <div class="lobby-field">
+              <label for="custom-room-code-input">🔑 Mã phòng tự chọn (Để trống để tạo ngẫu nhiên)</label>
+              <input type="text" id="custom-room-code-input" class="neon-input custom-room-code-input" placeholder="Nhập mã phòng..." maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-size:18px;font-weight:800;">
+            </div>
             <div class="lobby-field">
               <label for="max-players-select">👥 Số người chơi tối đa</label>
               <div class="max-players-row">
@@ -240,6 +249,13 @@
           <div id="hand-cards"></div>
         </div>
         <div class="action-buttons">
+          <div class="auto-nope-container" title="Tự động bỏ qua không đánh bài Phản Đối (Nope)">
+            <label class="switch">
+              <input type="checkbox" id="auto-nope-toggle">
+              <span class="slider round"></span>
+            </label>
+            <span class="auto-nope-label">Tự từ chối</span>
+          </div>
           <button id="draw-btn" disabled>📥 BỐC BÀI</button>
           <button id="play-btn" disabled>🃏 Chọn bài để đánh</button>
         </div>

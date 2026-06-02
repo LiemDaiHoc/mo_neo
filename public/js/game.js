@@ -806,7 +806,16 @@ const Game = {
     // Check each player for Nope
     for (const player of this.players) {
       if (!player.isAlive) continue;
-      if (player.index === playedBy.index) continue;
+      
+      // Skip self unless self-nope toggle is enabled for human player
+      if (player.index === playedBy.index) {
+        const selfNopeEnabled = document.getElementById('auto-nope-toggle')?.checked;
+        if (player.isHuman && player.hasCardType(CardType.NOPE) && selfNopeEnabled) {
+          // Do not skip human player if they want to self-nope
+        } else {
+          continue;
+        }
+      }
 
       if (player.hasCardType(CardType.NOPE)) {
         let wantsToNope = false;

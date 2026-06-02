@@ -55,6 +55,11 @@ io.on('connection', (socket) => {
     roomManager.startGame(socket);
   });
 
+  // Quay lại phòng chờ sau khi game kết thúc
+  socket.on('return_to_lobby', () => {
+    roomManager.returnToLobby(socket);
+  });
+
   // --- Hành động trong game ---
 
   // Đánh lá bài

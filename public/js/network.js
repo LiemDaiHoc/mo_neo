@@ -61,9 +61,14 @@ const Network = {
 
   // ===== Room Actions =====
 
-  createRoom(name, avatar, maxPlayers) {
+  createRoom(name, avatar, maxPlayers, roomCode) {
     if (!this.socket) return;
-    this.socket.emit('create_room', { name, avatar, maxPlayers });
+    this.socket.emit('create_room', { name, avatar, maxPlayers, roomCode });
+  },
+
+  returnToLobby() {
+    if (!this.socket) return;
+    this.socket.emit('return_to_lobby');
   },
 
   joinRoom(roomCode, name, avatar) {
@@ -135,8 +140,15 @@ const Network = {
     s.on('room_joined', (data) => {
       console.log('[Network] Đã vào phòng:', data.roomCode);
       this.roomCode = data.roomCode;
-      this.isHost = false;
-      UI.showWaitingRoom(data);
+      this.isHost = data.room ? (data.room.hostId === this.myPlayerId) : false;
+      
+      if (data.room && data.room.status === 'playing') {
+        // Reconnection success! Switch to game screen
+        UI.showGame();
+        Game.initOnline();
+      } else {
+        UI.showWaitingRoom(data);
+      }
     });
 
     s.on('player_joined', (data) => {
@@ -161,6 +173,29 @@ const Network = {
     s.on('room_error', (data) => {
       console.error('[Network] Lỗi phòng:', data.message);
       UI.showRoomError(data.message);
+    });
+
+    s.on('returned_to_lobby', (data) => {
+      UI.closeModal();
+      UI.stopConfetti();
+      document.getElementById('game-over-screen')?.classList.remove('active');
+      document.getElementById('game-screen')?.classList.remove('active');
+      
+      // Reset local Game state
+      Game.phase = 'menu';
+      Game.gameMode = 'online';
+      
+      // Update waiting room UI
+      UI.showWaitingRoom(data);
+    });
+
+    s.on('player_disconnected_grace', (data) => {
+      Game.addLog(`⚠️ ${data.playerName} mất kết nối! Đang chờ kết nối lại (60 giây)...`);
+    });
+
+    s.on('player_reconnected', (data) => {
+      Game.addLog(`⚡ ${data.playerName} đã kết nối lại thành công!`);
+      UI.updateWaitingRoom(data);
     });
   },
 

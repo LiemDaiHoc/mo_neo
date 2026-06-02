@@ -1414,6 +1414,37 @@ class ServerGame {
     }
     this.pendingAction = null;
   }
+
+  /**
+   * Khôi phục socket ID mới cho người chơi kết nối lại
+   */
+  handlePlayerReconnect(oldSocketId, newSocketId) {
+    const player = this.players.find(p => p.id === oldSocketId);
+    if (player) {
+      player.id = newSocketId;
+      
+      // Khôi phục trong pending action
+      if (this.pendingAction) {
+        if (this.pendingAction.playerId === oldSocketId) this.pendingAction.playerId = newSocketId;
+        if (this.pendingAction.targetId === oldSocketId) this.pendingAction.targetId = newSocketId;
+        if (this.pendingAction.requesterId === oldSocketId) this.pendingAction.requesterId = newSocketId;
+        
+        if (this.pendingAction.eligiblePlayerIds) {
+          this.pendingAction.eligiblePlayerIds = this.pendingAction.eligiblePlayerIds.map(
+            id => id === oldSocketId ? newSocketId : id
+          );
+        }
+        
+        if (this.pendingAction.responses && this.pendingAction.responses[oldSocketId] !== undefined) {
+          this.pendingAction.responses[newSocketId] = this.pendingAction.responses[oldSocketId];
+          delete this.pendingAction.responses[oldSocketId];
+        }
+      }
+      
+      this.addLog(`⚡ Người chơi ${player.name} đã kết nối lại!`);
+      this.broadcastState();
+    }
+  }
 }
 
 module.exports = ServerGame;

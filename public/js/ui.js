@@ -431,6 +431,23 @@ const UI = {
       (sortOrder[a.type] || 99) - (sortOrder[b.type] || 99)
     );
 
+    // Calculate dynamic overlapping margins when player holds many cards
+    const numCards = sorted.length;
+    let desktopOverlap = -35;
+    let desktopHoverOverlap = 6;
+    let mobileOverlap = -3.5;
+
+    if (numCards > 6) {
+      const excess = numCards - 6;
+      desktopOverlap = -35 - Math.min(excess * 6, 50); // scales from -35px down to -85px
+      desktopHoverOverlap = Math.max(6 - Math.min(excess * 3, 20), -12); // scales from 6px down to -12px
+      mobileOverlap = -3.5 - Math.min(excess * 0.5, 4.5); // scales from -3.5vmin down to -8.0vmin
+    }
+
+    container.style.setProperty('--card-overlap', `${desktopOverlap}px`);
+    container.style.setProperty('--card-overlap-hover', `${desktopHoverOverlap}px`);
+    container.style.setProperty('--card-overlap-mobile', `${mobileOverlap}vmin`);
+
     sorted.forEach((card, i) => {
       const el = this.createCardElement(card, true);
       const isSelected = Game.selectedCards.map(String).includes(String(card.id));
@@ -1420,6 +1437,7 @@ const UI = {
 
   showFavorChoice(targetPlayer, fromPlayer) {
     return new Promise((resolve) => {
+      let resolved = false;
       const container = document.createElement('div');
       container.className = 'modal-inner favor-modal';
 
@@ -1440,6 +1458,7 @@ const UI = {
         const cardEl = this.createCardElement(card, true);
         cardEl.classList.add('favor-card');
         cardEl.onclick = () => {
+          resolved = true;
           targetPlayer.removeCard(card.id);
           this.closeModal();
           resolve(card);
@@ -1449,6 +1468,21 @@ const UI = {
 
       container.appendChild(cardsRow);
       this.showModal(container);
+
+      // Fallback: If modal is closed or dismissed without active selection
+      this._modalResolve = (val) => {
+        if (!resolved) {
+          resolved = true;
+          if (targetPlayer.hand.length > 0) {
+            const idx = Math.floor(Math.random() * targetPlayer.hand.length);
+            const randomCard = targetPlayer.hand[idx];
+            targetPlayer.removeCard(randomCard.id);
+            resolve(randomCard);
+          } else {
+            resolve(null);
+          }
+        }
+      };
     });
   },
 
@@ -1796,6 +1830,13 @@ const UI = {
         return;
       }
 
+      // Auto Nope Toggle bypass
+      const autoNopeToggle = document.getElementById('auto-nope-toggle');
+      if (autoNopeToggle && autoNopeToggle.checked) {
+        resolve(false);
+        return;
+      }
+
       const container = document.createElement('div');
       container.className = 'modal-inner nope-modal';
 
@@ -1954,6 +1995,7 @@ const UI = {
     }
 
     // Avatar picker
+    const customAvatarInput = document.getElementById('custom-avatar-input');
     if (this.els.avatarPicker) {
       const avatarBtns = this.els.avatarPicker.querySelectorAll('.avatar-option');
       avatarBtns.forEach(btn => {
@@ -1961,8 +2003,21 @@ const UI = {
           avatarBtns.forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
           this._selectedAvatar = btn.dataset.avatar;
+          if (customAvatarInput) customAvatarInput.value = ''; // clear custom input
         };
       });
+    }
+
+    if (customAvatarInput) {
+      customAvatarInput.oninput = () => {
+        // Deselect preset options
+        if (this.els.avatarPicker) {
+          const avatarBtns = this.els.avatarPicker.querySelectorAll('.avatar-option');
+          avatarBtns.forEach(b => b.classList.remove('selected'));
+        }
+        // Set _selectedAvatar to custom value if not empty, otherwise default to first
+        this._selectedAvatar = customAvatarInput.value.trim() || '😺';
+      };
     }
 
     // Tabs
@@ -2000,8 +2055,13 @@ const UI = {
           setTimeout(() => this.els.playerNameInput.classList.remove('input-error'), 600);
           return;
         }
+
+        // Custom Room Code
+        const customCodeInput = document.getElementById('custom-room-code-input');
+        const customRoomCode = customCodeInput ? (customCodeInput.value || '').trim().toUpperCase() : '';
+
         Sounds.click();
-        Network.createRoom(name, this._selectedAvatar, this._selectedMaxPlayers);
+        Network.createRoom(name, this._selectedAvatar, this._selectedMaxPlayers, customRoomCode);
       };
     }
 
@@ -2178,6 +2238,19 @@ const UI = {
     if (!player || !player.isAlive) return;
     if (!player.hand.some(c => c.type === CardType.NOPE)) return;
 
+    // Self-Nope Toggle logic:
+    // When playing own card: only show Nope popup if "Tự từ chối" toggle is ON.
+    // If toggle is OFF (default), automatically decline.
+    // For opponents' cards: always show the Nope popup normally.
+    const isOwnCard = data.playedByName === player.name || data.playedByIndex === player.index;
+    if (isOwnCard) {
+      const selfNopeEnabled = document.getElementById('auto-nope-toggle')?.checked;
+      if (!selfNopeEnabled) {
+        Network.nopeResponse(false);
+        return;
+      }
+    }
+
     const container = document.createElement('div');
     container.className = 'modal-inner nope-modal';
 
@@ -2234,6 +2307,7 @@ const UI = {
 
   showOnlineFavorChoice(data) {
     // data: { fromPlayerName, myHand }
+    let resolved = false;
     const container = document.createElement('div');
     container.className = 'modal-inner favor-modal';
 
@@ -2254,6 +2328,7 @@ const UI = {
       const cardEl = this.createCardElement(card, true);
       cardEl.classList.add('favor-card');
       cardEl.onclick = () => {
+        resolved = true;
         this.closeModal();
         Network.favorGive(card.id);
       };
@@ -2262,6 +2337,19 @@ const UI = {
 
     container.appendChild(cardsRow);
     this.showModal(container);
+
+    // Fallback: If modal is closed/dismissed without selection
+    this._modalResolve = (val) => {
+      if (!resolved) {
+        resolved = true;
+        // Give a random card from hand
+        if (data.myHand && data.myHand.length > 0) {
+          const idx = Math.floor(Math.random() * data.myHand.length);
+          const randomCard = data.myHand[idx];
+          Network.favorGive(randomCard.id);
+        }
+      }
+    };
   },
 
   showOnlineDefusePlacement(deckSize) {

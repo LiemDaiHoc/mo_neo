@@ -12,6 +12,8 @@ class RoomManager {
     this.rooms = new Map();
     // Map: socketId → roomCode (để tìm phòng nhanh)
     this.socketToRoom = new Map();
+    // Map: socketId (old) → timeout object
+    this.reconnectTimeouts = new Map();
   }
 
   // ============================================================
@@ -32,7 +34,7 @@ class RoomManager {
   // ============================================================
   // Tạo phòng mới
   // ============================================================
-  createRoom(socket, { name, avatar, maxPlayers }) {
+  createRoom(socket, { name, avatar, maxPlayers, roomCode }) {
     // Kiểm tra nếu người chơi đang ở phòng khác
     if (this.socketToRoom.has(socket.id)) {
       socket.emit('error_message', { message: 'Bạn đang ở trong một phòng khác!' });
@@ -42,7 +44,22 @@ class RoomManager {
     // Giới hạn maxPlayers hợp lệ (2-5)
     maxPlayers = Math.min(Math.max(maxPlayers || 4, 2), 5);
 
-    const code = this.generateRoomCode();
+    let code = (roomCode || '').toUpperCase().trim();
+    if (code) {
+      // Validate code (only A-Z, 0-9, length between 2 and 6)
+      const validCodeRegex = /^[A-Z0-9]{2,6}$/;
+      if (!validCodeRegex.test(code)) {
+        socket.emit('error_message', { message: 'Mã phòng phải từ 2-6 ký tự chữ hoặc số!' });
+        return;
+      }
+      if (this.rooms.has(code)) {
+        socket.emit('error_message', { message: 'Mã phòng đã tồn tại!' });
+        return;
+      }
+    } else {
+      code = this.generateRoomCode();
+    }
+
     const room = {
       code,
       hostId: socket.id,
@@ -90,6 +107,55 @@ class RoomManager {
     // Kiểm tra phòng tồn tại
     if (!room) {
       socket.emit('error_message', { message: 'Phòng không tồn tại!' });
+      return;
+    }
+
+    // Kiểm tra nếu đây là kết nối lại của người chơi bị rớt mạng
+    const disconnectedPlayer = room.players.find(p => p.name === name && p.disconnected);
+    if (disconnectedPlayer) {
+      const oldSocketId = disconnectedPlayer.id;
+      
+      // Hủy bỏ timeout kết nối lại
+      const timeout = this.reconnectTimeouts.get(oldSocketId);
+      if (timeout) {
+        clearTimeout(timeout);
+        this.reconnectTimeouts.delete(oldSocketId);
+      }
+      
+      // Cập nhật lại socket ID mới
+      disconnectedPlayer.id = socket.id;
+      disconnectedPlayer.disconnected = false;
+      
+      this.socketToRoom.delete(oldSocketId);
+      this.socketToRoom.set(socket.id, code);
+      
+      socket.join(code);
+      
+      console.log(`[PHÒNG] ${name} kết nối lại thành công phòng ${code}.`);
+      
+      // Nếu chủ phòng cũ bị rớt mạng và kết nối lại, cập nhật lại hostId
+      if (room.hostId === oldSocketId) {
+        room.hostId = socket.id;
+      }
+      
+      // Thông báo cho các người chơi khác
+      socket.to(code).emit('player_reconnected', {
+        playerId: socket.id,
+        playerName: name,
+        room: this.sanitizeRoom(room)
+      });
+      
+      // Phản hồi thành công cho chính client kết nối lại
+      socket.emit('room_joined', {
+        roomCode: code,
+        room: this.sanitizeRoom(room)
+      });
+      
+      // Cập nhật socket ID mới vào game instance nếu đang chơi
+      if (room.game) {
+        room.game.handlePlayerReconnect(oldSocketId, socket.id);
+      }
+      
       return;
     }
 
@@ -296,8 +362,83 @@ class RoomManager {
     const code = this.socketToRoom.get(socket.id);
     if (!code) return;
 
-    // Delegate to leaveRoom which handles game disconnect too
-    this.leaveRoom(socket);
+    const room = this.rooms.get(code);
+    if (!room) return;
+
+    const player = room.players.find(p => p.id === socket.id);
+    if (!player) return;
+
+    // Kiểm tra xem phòng còn người trực kết nối khác không
+    const activePlayers = room.players.filter(p => p.id !== socket.id && !p.disconnected);
+    
+    if (activePlayers.length > 0) {
+      // Đánh dấu người chơi bị rớt mạng
+      player.disconnected = true;
+      console.log(`[PHÒNG] ${player.name} mất kết nối đột ngột khỏi phòng ${code}. Chờ kết nối lại trong 60 giây.`);
+      
+      // Thông báo cho các người chơi khác trong phòng
+      this.io.to(code).emit('player_disconnected_grace', {
+        playerId: socket.id,
+        playerName: player.name,
+        graceSeconds: 60
+      });
+      
+      // Hẹn giờ 60 giây để xóa người chơi nếu không kết nối lại
+      const timeout = setTimeout(() => {
+        console.log(`[PHÒNG] Quá 60s, ${player.name} không kết nối lại phòng ${code}. Xử lý rời phòng.`);
+        this.reconnectTimeouts.delete(socket.id);
+        
+        // Kiểm tra xem phòng còn tồn tại trước khi xử lý
+        const currentRoom = this.rooms.get(code);
+        if (currentRoom) {
+          // Xử lý giống như rời phòng
+          this.leaveRoom({ id: socket.id, leave: () => {} });
+        }
+      }, 60000);
+      
+      this.reconnectTimeouts.set(socket.id, timeout);
+    } else {
+      // Không còn ai khác trong phòng trực tuyến → Hủy phòng lập tức
+      this.leaveRoom(socket);
+    }
+  }
+
+  // ============================================================
+  // Quay lại phòng chờ
+  // ============================================================
+  returnToLobby(socket) {
+    const room = this.getRoomBySocket(socket.id);
+    if (!room) return;
+
+    // Reset trạng thái phòng chờ và dọn dẹp game cũ
+    room.status = 'waiting';
+    if (room.game) {
+      room.game.cleanup();
+      room.game = null;
+    }
+
+    // Đặt lại trạng thái sẵn sàng cho người chơi
+    room.players.forEach(p => {
+      p.ready = (p.id === room.hostId);
+      p.disconnected = false; // xóa trạng thái mất mạng
+    });
+
+    // Hủy các timeout của người chơi trong phòng này
+    room.players.forEach(p => {
+      const timeout = this.reconnectTimeouts.get(p.id);
+      if (timeout) {
+        clearTimeout(timeout);
+        this.reconnectTimeouts.delete(p.id);
+      }
+    });
+
+    // Phát sự kiện bắt buộc quay về phòng chờ cho cả phòng
+    this.io.to(room.code).emit('returned_to_lobby', {
+      roomCode: room.code,
+      room: this.sanitizeRoom(room)
+    });
+
+    console.log(`[PHÒNG] Phòng ${room.code} quay lại chế độ phòng chờ`);
   }
 
   // ============================================================
