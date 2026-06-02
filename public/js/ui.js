@@ -1980,7 +1980,7 @@ const UI = {
   },
 
   _selectedAvatar: '😺',
-  _selectedMaxPlayers: 4,
+  _selectedMaxPlayers: 5,
 
   setupOnlineLobbyEvents() {
     // Back button
