@@ -123,6 +123,18 @@ function spawnBot(name, avatar, isHost) {
     myIndex = state.myIndex;
     myHand = state.myHand || [];
 
+    // Pending Action Favor recovery upon reconnection
+    if (state.pendingAction && state.pendingAction.type === 'favor') {
+      console.log(`🎁 [${name}] Phát hiện yêu cầu Xin Bài đang chờ sau khi kết nối lại!`);
+      setTimeout(() => {
+        if (myHand.length > 0) {
+          const cardToGive = myHand[Math.floor(Math.random() * myHand.length)];
+          console.log(`🎁 [${name}] Cho đi lá bài: ${getCardName(cardToGive.type)}`);
+          socket.emit('favor_give', { cardId: cardToGive.id });
+        }
+      }, 1200);
+    }
+
     // Only decide actions if it is my turn and game is not processing
     const isMyTurn = state.currentPlayerIndex === myIndex;
     
@@ -241,7 +253,7 @@ function makeBotTurn(socket, name, hand, state) {
   const decisionRoll = Math.random();
 
   // Pick alive opponent
-  const opponents = state.opponents || [];
+  const opponents = (state.players || []).filter(p => p.index !== state.myIndex);
   const aliveOpponents = opponents.filter(o => o.isAlive);
   const randomOpponent = aliveOpponents.length > 0 
     ? aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)] 

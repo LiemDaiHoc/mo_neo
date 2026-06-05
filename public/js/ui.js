@@ -70,6 +70,15 @@ const UI = {
       turnFlash: document.getElementById('turn-flash'),
     };
 
+    // Setup auto-nope toggle listener
+    const autoNopeToggle = document.getElementById('auto-nope-toggle');
+    if (autoNopeToggle && !autoNopeToggle._listenerRegistered) {
+      autoNopeToggle._listenerRegistered = true;
+      autoNopeToggle.addEventListener('change', (e) => {
+        console.log('[UI] Nút Tự từ chối (Self-Nope Toggle) thay đổi trạng thái:', e.target.checked ? 'BẬT (ON)' : 'TẮT (OFF)');
+      });
+    }
+
     // Setup scaling
     if (!window._scaleEventRegistered) {
       window._scaleEventRegistered = true;
@@ -217,7 +226,12 @@ const UI = {
     restartBtn.onclick = () => {
       screen.classList.remove('active');
       this.stopConfetti();
-      Game.startGame(Game.numPlayers);
+      if (Game.gameMode === 'online') {
+        console.log('[UI] Người chơi yêu cầu quay lại phòng chờ chơi online...');
+        Network.returnToLobby();
+      } else {
+        Game.startGame(Game.numPlayers);
+      }
     };
 
     const menuBtn = screen.querySelector('.menu-btn');
@@ -1830,11 +1844,22 @@ const UI = {
         return;
       }
 
-      // Auto Nope Toggle bypass
-      const autoNopeToggle = document.getElementById('auto-nope-toggle');
-      if (autoNopeToggle && autoNopeToggle.checked) {
-        resolve(false);
-        return;
+      // Self-Nope Toggle logic for offline:
+      // When playing own card: only show Nope popup if "Tự từ chối" toggle is ON.
+      // If toggle is OFF (default), automatically decline.
+      // For opponents' cards: always show the Nope popup normally.
+      const isOwnCard = playedBy.index === player.index;
+      if (isOwnCard) {
+        const selfNopeEnabled = document.getElementById('auto-nope-toggle')?.checked;
+        console.log('[showNopePrompt] Đang đánh bài của chính mình. Nút Tự từ chối (Self-Nope) đang:', selfNopeEnabled ? 'BẬT (ON)' : 'TẮT (OFF)');
+        if (!selfNopeEnabled) {
+          console.log('[showNopePrompt] Tự từ chối tắt -> Tự động bỏ qua Phản Đối.');
+          resolve(false);
+          return;
+        }
+        console.log('[showNopePrompt] Tự từ chối bật -> Hiển thị khung popup Phản Đối bài của mình.');
+      } else {
+        console.log(`[showNopePrompt] ${playedBy.name} đánh bài. Hiển thị khung popup Phản Đối.`);
       }
 
       const container = document.createElement('div');
@@ -2245,10 +2270,15 @@ const UI = {
     const isOwnCard = data.playedByName === player.name || data.playedByIndex === player.index;
     if (isOwnCard) {
       const selfNopeEnabled = document.getElementById('auto-nope-toggle')?.checked;
+      console.log('[showOnlineNopePrompt] Đang đánh bài của chính mình online. Nút Tự từ chối (Self-Nope) đang:', selfNopeEnabled ? 'BẬT (ON)' : 'TẮT (OFF)');
       if (!selfNopeEnabled) {
+        console.log('[showOnlineNopePrompt] Tự từ chối tắt -> Tự động trả lời FALSE (Bỏ qua) về server.');
         Network.nopeResponse(false);
         return;
       }
+      console.log('[showOnlineNopePrompt] Tự từ chối bật -> Hiển thị khung popup Phản Đối bài của mình.');
+    } else {
+      console.log(`[showOnlineNopePrompt] ${data.playedByName} đánh bài online. Hiển thị khung popup Phản Đối.`);
     }
 
     const container = document.createElement('div');
