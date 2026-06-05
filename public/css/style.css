@@ -2843,12 +2843,13 @@ input[type="range"]::-moz-range-thumb {
     padding-bottom: calc(1vmin + var(--safe-bottom)) !important;
   }
   #hand-cards {
-    padding: 7vmin 2.5vmin 1.5vmin 2.5vmin !important; /* Increased top padding from 3vmin to 7vmin to prevent top clipping */
-    margin-top: -3.5vmin !important; /* Offset visual position downwards so cards stay at same visual height */
+    padding: 7vmin 4vmin 1.5vmin 4vmin !important; /* Increased horizontal padding */
+    margin-top: -3.5vmin !important;
     overflow-x: auto !important;
     overflow-y: visible !important;
-    justify-content: center !important;
-    justify-content: safe center !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important; /* Ensure scroll container scrolls correctly from left to right when overflowed */
     scroll-snap-type: x proximity !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
@@ -3762,18 +3763,19 @@ input[type="range"]::-moz-range-thumb {
   padding-bottom: calc(1vmin + var(--safe-bottom)) !important;
 }
 #app.fullscreen-active #hand-cards {
-  padding: 7vmin 2.5vmin 1.5vmin 2.5vmin !important;
+  padding: 7vmin 4vmin 1.5vmin 4vmin !important;
   margin-top: -3.5vmin !important;
   overflow-x: auto !important;
   overflow-y: visible !important;
-  justify-content: center !important;
-  justify-content: safe center !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important; /* Ensure proper scroll alignment instead of cut-off center */
   scrollbar-width: none !important;
 }
 #app.fullscreen-active #hand-cards::-webkit-scrollbar { display: none !important; }
 #app.fullscreen-active #hand-cards .card {
   flex-shrink: 0 !important;
-  margin-left: -3.5vmin !important;
+  margin-left: var(--card-overlap-mobile, -3.5vmin) !important; /* Use dynamic vmin scale based on card count */
 }
 #app.fullscreen-active #hand-cards .card:first-child { margin-left: 0 !important; }
 

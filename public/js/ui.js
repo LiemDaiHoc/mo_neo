@@ -453,9 +453,12 @@ const UI = {
 
     if (numCards > 6) {
       const excess = numCards - 6;
-      desktopOverlap = -35 - Math.min(excess * 6, 50); // scales from -35px down to -85px
-      desktopHoverOverlap = Math.max(6 - Math.min(excess * 3, 20), -12); // scales from 6px down to -12px
-      mobileOverlap = -3.5 - Math.min(excess * 0.5, 4.5); // scales from -3.5vmin down to -8.0vmin
+      // Allow cards to overlap up to -95px on desktop (max out at -95px instead of -85px)
+      desktopOverlap = -35 - Math.min(excess * 8, 65); 
+      // Scales down hover overlap to keep them tight on screen
+      desktopHoverOverlap = Math.max(6 - Math.min(excess * 4, 25), -15); 
+      // Mobile scales from -3.5vmin down to -10.5vmin to support extremely large hands
+      mobileOverlap = -3.5 - Math.min(excess * 0.8, 7.0); 
     }
 
     container.style.setProperty('--card-overlap', `${desktopOverlap}px`);
