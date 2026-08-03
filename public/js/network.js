@@ -309,7 +309,8 @@ const Network = {
 
     s.on('turn_start', (data) => {
       // data: { currentPlayerIndex, playerName, turnsToPlay }
-      const isMyTurn = Game.players[data.currentPlayerIndex]?.id === this.myPlayerId;
+      // [BUG-010 FIX] Dùng player.index thay vì array index để tránh lệch sau khi ai đó bị loại
+      const isMyTurn = Game.players.find(p => p.index === data.currentPlayerIndex)?.id === this.myPlayerId;
       if (isMyTurn) {
         Game.addLog(`🎯 Lượt của bạn!`);
         Sounds.turnStart();

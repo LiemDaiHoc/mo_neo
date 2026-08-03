@@ -1140,7 +1140,8 @@ class ServerGame {
 
     if (this.discardPile.length === 0) {
       this.addLog(`✨ ${player.name} chơi Combo 5 lá nhưng xấp bài bỏ đang trống!`);
-      this.broadcastState();
+      // [BUG-002 FIX] Phải tiếp tục lượt thay vì chỉ broadcast state
+      this.startTurn();
       return;
     }
 
@@ -1203,7 +1204,8 @@ class ServerGame {
     this.addLog(`🎁 ${player.name} đã lấy lá ${cardName} từ xấp bài bỏ!`);
 
     this.pendingAction = null;
-    this.broadcastState();
+    // [BUG-001 FIX] Tiếp tục lượt của người chơi (vẫn cần rút bài để kết thúc lượt)
+    this.startTurn();
   }
 
   // ============================================================
@@ -1260,7 +1262,13 @@ class ServerGame {
     // Nếu đang chờ hành động từ người này → hủy
     if (this.pendingAction) {
       if (this.pendingAction.type === 'defuse' && this.pendingAction.playerId === socketId) {
-        // Tự loại vì không thể đặt Mèo Nổ
+        // [BUG-003 FIX] Đặt lại Mèo Nổ vào bộ bài ngẫu nhiên thay vì để mất
+        const ekCard = this.pendingAction.ekCard;
+        if (ekCard) {
+          const randomPos = Math.floor(Math.random() * (this.deck.length + 1));
+          this.deck.splice(randomPos, 0, ekCard);
+          this.addLog(`💣 Mèo Nổ được đặt lại ngẫu nhiên do ${player.name} mất kết nối!`);
+        }
         this.pendingAction = null;
       }
       if (this.pendingAction && this.pendingAction.type === 'favor' && this.pendingAction.targetId === socketId) {
@@ -1274,6 +1282,12 @@ class ServerGame {
           id => id !== socketId
         );
         this.pendingAction.responses[socketId] = false;
+      }
+      // [BUG-007 FIX] Hủy discard_picker khi người đang chọn bài mất kết nối
+      if (this.pendingAction && this.pendingAction.type === 'discard_picker'
+          && this.pendingAction.playerId === socketId) {
+        this.addLog(`✨ Combo 5 Lá bị hủy do ${player.name} mất kết nối!`);
+        this.pendingAction = null;
       }
     }
 
@@ -1443,6 +1457,15 @@ class ServerGame {
       
       this.addLog(`⚡ Người chơi ${player.name} đã kết nối lại!`);
       this.broadcastState();
+
+      // [BUG-004 FIX] Nếu đang là lượt người vừa reconnect → gửi lại turn_start để enable UI
+      if (player.index === this.currentPlayerIndex && player.isAlive && !this.pendingAction) {
+        this.emitTo(newSocketId, 'turn_start', {
+          currentPlayerIndex: this.currentPlayerIndex,
+          playerName: player.name,
+          turnsToPlay: player.turnsToPlay
+        });
+      }
     }
   }
 }
